@@ -28,5 +28,7 @@ def read_dotenv():
                     os.getenv("DRYER_TIMER_DURATION_MINUTES", "30,45,60").split(","),
                 )
             ),
+            "SENSOR_API_KEY": os.getenv("SENSOR_API_KEY"),
+            "SENSOR_API_PORT": int(os.getenv("SENSOR_API_PORT", 5001)),
         }
     )

@@ -1,8 +1,10 @@
 import logging
 import datetime
+import threading
 import constants
 import storage
 import commands
+from api import start_api
 from telegram import Bot, Update
 from telegram.ext import (
     Application,
@@ -121,6 +123,8 @@ def main():
     application.job_queue.run_repeating(
         send_alarms, interval=datetime.timedelta(seconds=30)
     )
+
+    threading.Thread(target=start_api, daemon=True).start()
 
     if config.get("PRODUCTION"):
         logger.info("Running on webhook")
