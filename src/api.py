@@ -2,11 +2,13 @@ import datetime
 import json
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import storage
 import constants
 from config import config
 
 app = Flask(__name__)
+CORS(app)
 
 import os
 MACHINES_JSON_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "machines.json")
