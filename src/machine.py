@@ -2,7 +2,7 @@ from abc import ABC
 import datetime
 import pytz
 import utils
-import storage
+import db_storage as storage
 from config import config
 
 SGT_TIMEZONE = pytz.timezone("Asia/Singapore")

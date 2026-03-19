@@ -2,7 +2,7 @@ import logging
 import datetime
 import threading
 import constants
-import storage
+import db_storage as storage
 import commands
 from api import start_api
 from telegram import Bot, Update

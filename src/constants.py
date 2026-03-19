@@ -11,7 +11,7 @@ HOUSES = {
     "Phoenix": "\U0001F525\U0001F425 Phoenix \U0001F425\U0001F525",
     "Tulpar": "\U0001F5A4\U0001F434 Tulpar \U0001F434\U0001F5A4",
 }
-MACHINE_NAMES = ["Dryer One", "Dryer Two", "Washer One", "Washer Two"]
+MACHINE_NAMES = ["Dryer One", "Dryer Two", "Dryer Three", "Washer One", "Washer Two", "Washer Three"]
 
 
 class ConvState(str, Enum):

@@ -1,5 +1,5 @@
 import logging
-import storage
+import db_storage as storage
 import constants
 from telegram import (
     Update,

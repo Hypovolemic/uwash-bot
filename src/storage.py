@@ -62,23 +62,27 @@ def write_timers():
 def concatenate_house_machine(house:str, machine_name:str) -> str:
     return f"{house}_{machine_name}"
 
-def set_laundry_timer(house:str, machine_name: str, curr_user: str, end_time: datetime.datetime, chat_id: int, thread_id:int|None):
+def set_laundry_timer(house:str, machine_name: str, curr_user: str, end_time: datetime.datetime, chat_id: int|None = None, thread_id:int|None = None, start_time: datetime.datetime|None = None):
     global timer_data_cache
     timestamp = int(end_time.timestamp())
-    timer_data_cache.update({concatenate_house_machine(house, machine_name):{"currUser": curr_user, "endTime": timestamp}})
+    start_timestamp = int(start_time.timestamp()) if start_time else int(datetime.datetime.now().timestamp())
+    timer_data_cache.update({concatenate_house_machine(house, machine_name):{"currUser": curr_user, "endTime": timestamp, "startTime": start_timestamp}})
     write_timers()
-    write_alarms(curr_user, f"{house} {machine_name}", timestamp, chat_id, thread_id)
+    if chat_id is not None:
+        write_alarms(curr_user, f"{house} {machine_name}", timestamp, chat_id, thread_id)
 
-def get_laundry_timer(house:str, machine_name: str) -> tuple[str, datetime.datetime]:
+def get_laundry_timer(house:str, machine_name: str) -> tuple[str, datetime.datetime, datetime.datetime|None]:
     data = timer_data_cache.get(concatenate_house_machine(house, machine_name))
     if data and data.get("currUser") and data.get("endTime"):
-        return (data.get("currUser"), datetime.datetime.fromtimestamp(data.get("endTime")))
-    return ("", None)
+        start_time = datetime.datetime.fromtimestamp(data.get("startTime")) if data.get("startTime") else None
+        return (data.get("currUser"), datetime.datetime.fromtimestamp(data.get("endTime")), start_time)
+    return ("", None, None)
 
 def set_laundry_timer_sensor(house: str, machine_name: str, end_time: datetime.datetime):
     global timer_data_cache
     timestamp = int(end_time.timestamp())
-    timer_data_cache.update({concatenate_house_machine(house, machine_name): {"currUser": "sensor", "endTime": timestamp}})
+    start_timestamp = int(datetime.datetime.now().timestamp())
+    timer_data_cache.update({concatenate_house_machine(house, machine_name): {"currUser": "sensor", "endTime": timestamp, "startTime": start_timestamp}})
     write_timers()
 
 def clear_laundry_timer(house: str, machine_name: str):

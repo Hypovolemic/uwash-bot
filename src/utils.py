@@ -1,6 +1,6 @@
 import datetime
 import logging
-import storage
+import db_storage as storage
 import constants
 from select_house import create_select_house
 from telegram import Message, Update
