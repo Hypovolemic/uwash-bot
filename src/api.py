@@ -248,5 +248,7 @@ def start_cycle():
 
 
 def start_api():
-    port = config.get("SENSOR_API_PORT", 5001)
+    # Railway provides PORT env var, fallback to SENSOR_API_PORT or 5001
+    import os
+    port = int(os.environ.get("PORT", config.get("SENSOR_API_PORT", 5001)))
     app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
