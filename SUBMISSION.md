@@ -91,8 +91,3 @@ flowchart TB
     Bot <-->|Telegram API| Phone
     Browser --> React
 ```
-
-- **Hardware Cost**: ~$10-15 per machine (ESP32 $5 + SW-420 sensor $2 + wiring)
-- **Latency**: <1 second from vibration detection to dashboard update
-- **Scalability**: Single backend can handle 100+ machines across multiple houses
-- **Zero Modification**: No internal wiring to machines, fully reversible installation
