@@ -1,6 +1,8 @@
 import logging
 import datetime
 import threading
+import asyncio
+import os
 import constants
 import db_storage as storage
 import commands
@@ -37,8 +39,6 @@ logging.getLogger("apscheduler.executors.default").setLevel(logging.WARNING)
 
 logger = logging.getLogger("main")
 
-TBOT = Bot(config.get("TELEGRAM_BOT_API_KEY"))
-
 MACHINES = {}
 for house_id in constants.HOUSES.keys():
     MACHINES.update(
@@ -58,13 +58,26 @@ COMMANDS_DICT = {
     "status": constants.STATUS_COMMAND_DESCRIPTION,
 }
 
-TBOT.set_my_commands(COMMANDS_DICT.items())
+
+async def setup_bot_commands(application: Application):
+    """Set up bot commands asynchronously."""
+    await application.bot.set_my_commands(list(COMMANDS_DICT.items()))
+    logger.info("Bot commands registered successfully")
+
+
+async def error_handler(update: object, context: CallbackContext) -> None:
+    """Handle errors in the bot."""
+    logger.error(f"Update {update} caused error: {context.error}")
 
 
 def main():
     application = (
         Application.builder().token(config.get("TELEGRAM_BOT_API_KEY")).build()
     )
+
+    # Register commands on startup
+    application.post_init = setup_bot_commands
+
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler("start", commands.start),
@@ -114,11 +127,7 @@ def main():
     )
 
     application.add_handler(conv_handler)
-    application.add_error_handler(
-        lambda update, context: logger.error(
-            f"Update {update} caused error: {context.error}"
-        )
-    )
+    application.add_error_handler(error_handler)
 
     application.job_queue.run_repeating(
         send_alarms, interval=datetime.timedelta(seconds=30)
@@ -126,21 +135,33 @@ def main():
 
     threading.Thread(target=start_api, daemon=True).start()
 
-    if config.get("PRODUCTION"):
-        logger.info("Running on webhook")
-        application.run_webhook(
-            listen="0.0.0.0",
-            port=config.get("PORT"),
-            webhook_url=config.get("WEBHOOK_URL"),
-        )
+    # Check for production mode via env var or config
+    is_production = os.environ.get("PRODUCTION", "").lower() == "true" or config.get("PRODUCTION")
+
+    if is_production:
+        webhook_url = os.environ.get("WEBHOOK_URL") or config.get("WEBHOOK_URL")
+        port = int(os.environ.get("PORT", config.get("PORT", 8443)))
+
+        if webhook_url:
+            logger.info(f"Running on webhook: {webhook_url}")
+            application.run_webhook(
+                listen="0.0.0.0",
+                port=port,
+                webhook_url=webhook_url,
+            )
+        else:
+            logger.warning("PRODUCTION=true but no WEBHOOK_URL set, falling back to polling")
+            application.run_polling(drop_pending_updates=True)
     else:
-        application.run_polling()
+        logger.info("Running in polling mode")
+        application.run_polling(drop_pending_updates=True)
 
 
-async def send_alarms(context=None):
+async def send_alarms(context: CallbackContext):
+    """Check and send due alarms."""
     for curr_user, chat_id, thread_id, machine_house_name in storage.check_alarms():
         logger.info(f"Sending alarm to {curr_user} in chat {chat_id}#{thread_id}")
-        await TBOT.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             message_thread_id=thread_id,
             text=f"@{curr_user} your clothes from {machine_house_name} are ready for collection! Please collect them now so that others may use it!",
